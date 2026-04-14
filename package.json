@@ -1,0 +1,40 @@
+{
+  "name": "@fingerprintiq/pulse",
+  "version": "0.1.0",
+  "description": "Privacy-respecting CLI usage analytics and machine fingerprinting — PostHog for CLIs",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.mjs", "require": "./dist/index.js" }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "devDependencies": { "@types/node": "^20.0.0", "tsup": "^8.0.0", "typescript": "^5.5.0", "vitest": "^2.0.0" },
+  "license": "MIT",
+  "keywords": [
+    "cli",
+    "analytics",
+    "fingerprint",
+    "telemetry",
+    "machine-id",
+    "usage-tracking",
+    "privacy",
+    "do-not-track"
+  ],
+  "author": "FingerprintIQ <hello@fingerprintiq.com> (https://fingerprintiq.com)",
+  "homepage": "https://fingerprintiq.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fingerprintiq/pulse.git"
+  },
+  "bugs": "https://github.com/fingerprintiq/pulse/issues",
+  "publishConfig": {
+    "access": "public"
+  }
+}
