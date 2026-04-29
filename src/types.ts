@@ -6,6 +6,7 @@ export interface PulseConfig {
   respectOptOut?: boolean;
   flushInterval?: number;
   maxBatchSize?: number;
+  requestTimeout?: number;
 }
 
 export interface MachineFingerprint {

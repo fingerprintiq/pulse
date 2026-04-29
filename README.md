@@ -56,9 +56,10 @@ await pulse.shutdown();
 - `DO_NOT_TRACK=1` or `FINGERPRINTIQ_OPTOUT=1` disables all collection
 - Hostnames, MAC addresses, disk serials are SHA-256 hashed before leaving the machine
 - No PII ever transmitted
-- Offline-safe — events buffered locally, flushed on next connection
+- Offline-safe — network failures are swallowed and never affect CLI behavior
 - CLI never blocks or fails due to analytics
 - Timer uses `.unref()` — never keeps your process alive
+- `track()` queues locally and returns without waiting on FingerprintIQ network calls
 
 ## Machine Fingerprint Signals (26 total)
 
@@ -94,7 +95,8 @@ const pulse = new Pulse({
   endpoint: 'https://...',     // Custom endpoint
   respectOptOut: true,         // Honor DO_NOT_TRACK (default: true)
   flushInterval: 30000,        // Auto-flush interval in ms (default: 30000)
-  maxBatchSize: 100,           // Max events per flush (default: 100)
+  maxBatchSize: 25,            // Max events per flush (default: 25)
+  requestTimeout: 1000,        // Network timeout in ms (default: 1000)
 });
 ```
 

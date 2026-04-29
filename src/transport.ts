@@ -13,6 +13,7 @@ export class PulseTransport {
   private readonly tool: string;
   private readonly version: string;
   private readonly maxBatchSize: number;
+  private readonly requestTimeout: number;
 
   private buffer: PulseEvent[] = [];
   private machineId: string | null = null;
@@ -26,6 +27,7 @@ export class PulseTransport {
     this.tool = config.tool;
     this.version = config.version;
     this.maxBatchSize = config.maxBatchSize ?? 25;
+    this.requestTimeout = config.requestTimeout ?? 1000;
 
     const flushInterval = config.flushInterval ?? 30_000;
     this.timer = setInterval(() => {
@@ -36,16 +38,28 @@ export class PulseTransport {
     this.timer.unref();
   }
 
-  async identify(fingerprint: MachineFingerprint): Promise<void> {
+  private async postJson(pathname: string, body: unknown): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
+
     try {
-      const res = await fetch(`${this.endpoint}/v1/pulse/identify`, {
+      return await fetch(`${this.endpoint}${pathname}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-API-Key": this.apiKey,
         },
-        body: JSON.stringify(fingerprint),
+        body: JSON.stringify(body),
+        signal: controller.signal,
       });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  async identify(fingerprint: MachineFingerprint): Promise<void> {
+    try {
+      const res = await this.postJson("/v1/pulse/identify", fingerprint);
 
       if (res.ok) {
         const data = (await res.json()) as { machineId?: string };
@@ -82,14 +96,7 @@ export class PulseTransport {
         events: batch,
       };
 
-      await fetch(`${this.endpoint}/v1/pulse/event`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-API-Key": this.apiKey,
-        },
-        body: JSON.stringify(payload),
-      });
+      await this.postJson("/v1/pulse/event", payload);
     })()
       .catch(() => {
         // Silently fail — put events back if flush failed? No — drop silently to avoid memory leaks

@@ -30,29 +30,19 @@ export class Pulse {
     this.disabled = isOptedOut(this.config.respectOptOut ?? true);
   }
 
-  private async init(): Promise<void> {
+  private init(): void {
     if (this.initialized || this.disabled) return;
 
-    // Deduplicate concurrent init calls
-    if (this.initPromise) {
-      await this.initPromise;
-      return;
-    }
-
-    this.initPromise = (async () => {
-      this.transport = new PulseTransport(this.config);
-      const fingerprint = collectMachineFingerprint();
-      await this.transport.identify(fingerprint);
-      this.initialized = true;
-    })();
-
-    await this.initPromise;
+    this.transport = new PulseTransport(this.config);
+    const fingerprint = collectMachineFingerprint();
+    this.initPromise = this.transport.identify(fingerprint);
+    this.initialized = true;
   }
 
   async track(command: string, metadata?: Record<string, unknown>): Promise<void> {
     if (this.disabled) return;
 
-    await this.init();
+    this.init();
 
     if (!this.transport) return;
 
@@ -73,6 +63,7 @@ export class Pulse {
 
   async shutdown(): Promise<void> {
     if (this.disabled) return;
+    await this.initPromise;
     if (this.transport) {
       await this.transport.shutdown();
     }
