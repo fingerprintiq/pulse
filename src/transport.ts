@@ -18,6 +18,7 @@ export class PulseTransport {
   private machineId: string | null = null;
   private timer: ReturnType<typeof setInterval> | null = null;
   private flushing = false;
+  private flushPromise: Promise<void> | null = null;
 
   constructor(config: PulseConfig) {
     this.endpoint = config.endpoint ?? "https://fingerprintiq.com";
@@ -63,12 +64,17 @@ export class PulseTransport {
   }
 
   async flush(): Promise<void> {
-    if (this.flushing || this.buffer.length === 0) return;
+    if (this.flushing) {
+      await this.flushPromise;
+      return;
+    }
+
+    if (this.buffer.length === 0) return;
 
     this.flushing = true;
     const batch = this.buffer.splice(0, this.maxBatchSize);
 
-    try {
+    this.flushPromise = (async () => {
       const payload: EventPayload = {
         machineId: this.machineId,
         tool: this.tool,
@@ -84,11 +90,16 @@ export class PulseTransport {
         },
         body: JSON.stringify(payload),
       });
-    } catch {
-      // Silently fail — put events back if flush failed? No — drop silently to avoid memory leaks
-    } finally {
-      this.flushing = false;
-    }
+    })()
+      .catch(() => {
+        // Silently fail — put events back if flush failed? No — drop silently to avoid memory leaks
+      })
+      .finally(() => {
+        this.flushing = false;
+        this.flushPromise = null;
+      });
+
+    await this.flushPromise;
   }
 
   async shutdown(): Promise<void> {
@@ -96,6 +107,9 @@ export class PulseTransport {
       clearInterval(this.timer);
       this.timer = null;
     }
-    await this.flush();
+    await this.flushPromise;
+    while (this.buffer.length > 0) {
+      await this.flush();
+    }
   }
 }

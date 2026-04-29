@@ -1,6 +1,6 @@
 {
   "name": "@fingerprintiq/pulse",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Privacy-respecting CLI usage analytics and machine fingerprinting — PostHog for CLIs",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
