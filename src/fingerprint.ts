@@ -53,7 +53,6 @@ function detectContainerType(): string | null {
 function getShell(): string | null {
   const shell = process.env.SHELL || process.env.ComSpec || null;
   if (!shell) return null;
-  // Return just the basename
   const parts = shell.replace(/\\/g, "/").split("/");
   return parts[parts.length - 1] ?? null;
 }
@@ -117,6 +116,14 @@ function detectNodeVersionManager(): string | null {
   return null;
 }
 
+function getProcessVersions(): Record<string, string> {
+  const versions: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.versions)) {
+    if (typeof value === "string") versions[key] = value;
+  }
+  return versions;
+}
+
 export function collectMachineFingerprint(): MachineFingerprint {
   const os = platform();
   const architecture = arch();
@@ -173,6 +180,6 @@ export function collectMachineFingerprint(): MachineFingerprint {
     wslDistro: process.env.WSL_DISTRO_NAME ?? null,
     nodeVersionManager: detectNodeVersionManager(),
     systemUptime: Math.round(uptime()),
-    processVersions: process.versions as unknown as Record<string, string>,
+    processVersions: getProcessVersions(),
   };
 }

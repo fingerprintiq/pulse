@@ -34,7 +34,7 @@ export class PulseTransport {
       void this.flush();
     }, flushInterval);
 
-    // Don't keep the process alive just for analytics
+    // Analytics delivery should not keep CLI processes alive.
     this.timer.unref();
   }
 
